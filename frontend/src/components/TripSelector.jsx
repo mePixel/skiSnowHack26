@@ -11,7 +11,7 @@ export default function TripSelector({ trips, selectedTrip, onSelectTrip }) {
   };
 
   if (!trips || trips.length === 0) {
-    return (
+      return (
       <div className="w-full p-4 text-center text-muted-foreground">
         No trips available
       </div>

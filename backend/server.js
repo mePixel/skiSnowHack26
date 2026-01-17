@@ -74,15 +74,21 @@ app.get(`${API_PREFIX}/trips/:id`, (req, res) => {
     }
 
     const fileContent = fs.readFileSync(filePath, 'utf8');
-    
+
+
+      console.log("1")
     // Check if file is empty
     if (!fileContent || fileContent.trim() === '') {
+        console.log("1.1")
       console.error(`Trip file is empty: ${id}`);
       return res.status(400).json({ error: 'Trip data file is empty', id });
     }
+      console.log("2")
 
     const data = JSON.parse(fileContent);
-    
+
+      console.log("3")
+
     // Add metadata
     const response = {
       id,
@@ -92,6 +98,9 @@ app.get(`${API_PREFIX}/trips/:id`, (req, res) => {
         hasGPS: Object.values(data).some(entry => entry.gps)
       }
     };
+
+
+      console.log("4")
     
     res.json(response);
   } catch (error) {
@@ -100,6 +109,29 @@ app.get(`${API_PREFIX}/trips/:id`, (req, res) => {
       return res.status(400).json({ error: 'Invalid JSON format in trip data file' });
     }
     res.status(500).json({ error: 'Failed to fetch trip data' });
+  }
+});
+
+// DELETE /api/trips/:id - Delete a specific trip
+app.delete(`${API_PREFIX}/trips/:id`, (req, res) => {
+  try {
+    const { id } = req.params;
+    const filePath = path.join(getJsonDir(), `${id}.json`);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Trip not found' });
+    }
+
+    // Delete the file
+    fs.unlinkSync(filePath);
+    
+    res.json({
+      message: 'Trip deleted successfully',
+      id
+    });
+  } catch (error) {
+    console.error('Error deleting trip:', error);
+    res.status(500).json({ error: 'Failed to delete trip' });
   }
 });
 
@@ -123,9 +155,10 @@ app.listen(PORT, () => {
   console.log(`🎿 Ski Resort Backend API running on port ${PORT}`);
   console.log(`🌍 Environment: ${NODE_ENV}`);
   console.log(`📍 API endpoints:`);
-  console.log(`   GET  http://localhost:${PORT}${API_PREFIX}/trips`);
-  console.log(`   GET  http://localhost:${PORT}${API_PREFIX}/trips/:id`);
-  console.log(`   GET  http://localhost:${PORT}${API_PREFIX}/health`);
+  console.log(`   GET    http://localhost:${PORT}${API_PREFIX}/trips`);
+  console.log(`   GET    http://localhost:${PORT}${API_PREFIX}/trips/:id`);
+  console.log(`   DELETE http://localhost:${PORT}${API_PREFIX}/trips/:id`);
+  console.log(`   GET    http://localhost:${PORT}${API_PREFIX}/health`);
   console.log(`📁 JSON Data Path: ${path.join(__dirname, JSON_DATA_PATH)}`);
   console.log(`🔒 CORS Origin: ${CORS_ORIGIN}`);
 });

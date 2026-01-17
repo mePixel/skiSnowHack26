@@ -27,10 +27,14 @@ export function parseTripData(rawData) {
   }
 
   const entries = Object.entries(rawData);
-  
+
+    console.log("2")
+
   // Extract GPS points with valid data and filter by accuracy
   const gpsPoints = entries
     .filter(([_, data]) => {
+        console.log("Filtering data point:", data)
+        console.log(!data.gps)
       // Check if GPS data exists and has required fields
       if (!data.gps) return false;
       if (typeof data.gps.latitude !== 'number' || typeof data.gps.longitude !== 'number') return false;
@@ -53,6 +57,10 @@ export function parseTripData(rawData) {
     }))
     .sort((a, b) => a.timestamp - b.timestamp);
 
+
+    console.log("3")
+
+    console.log(gpsPoints)
   // If no valid GPS points, return empty data
   if (gpsPoints.length === 0) {
     return {
@@ -71,17 +79,21 @@ export function parseTripData(rawData) {
       endPoint: null
     };
   }
+    console.log("4")
 
   // Extract arrays for calculations
   const speeds = gpsPoints.map(p => p.speed);
   const altitudes = gpsPoints.map(p => p.altitude);
+    console.log("5")
   
   // Calculate basic metrics
   const maxSpeed = Math.max(...speeds);
   const maxAltitude = Math.max(...altitudes);
   const minAltitude = Math.min(...altitudes);
   const verticalDrop = maxAltitude - minAltitude;
-  
+
+    console.log("6")
+
   // Calculate total distance using Haversine formula
   let totalDistance = 0;
   for (let i = 1; i < gpsPoints.length; i++) {
@@ -93,15 +105,22 @@ export function parseTripData(rawData) {
     );
   }
 
+
+    console.log("7")
+
   // Calculate duration in seconds
   const duration = (gpsPoints[gpsPoints.length - 1].timestamp - gpsPoints[0].timestamp) / 1000;
 
+    console.log("8")
   // Find max speed point
   const maxSpeedPoint = gpsPoints.reduce((max, point) => 
     point.speed > max.speed ? point : max, gpsPoints[0]);
 
+    console.log("9")
   // Create polyline for map (array of [lat, lng] arrays)
   const polyline = gpsPoints.map(p => [p.lat, p.lng]);
+
+    console.log("10")
 
   return {
     gpsPoints,

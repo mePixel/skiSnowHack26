@@ -4,6 +4,7 @@ import { Card, CardContent } from './components/ui/card';
 import SkiPass from './components/SkiPass';
 import SlopeMap from './components/SlopeMap';
 import Analytics from './components/Analytics';
+import Dialog from './components/ui/dialog';
 import { parseTripData } from './utils/dataParser';
 import { Loader2, AlertCircle, Mountain } from 'lucide-react';
 
@@ -15,6 +16,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('pass');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [tripToDelete, setTripToDelete] = useState(null);
 
   // Fetch available trips on mount
   useEffect(() => {
@@ -38,9 +41,16 @@ function App() {
       const data = await response.json();
       setTrips(data);
       
-      // Auto-select the first trip if available
-      if (data.length > 0 && !selectedTrip) {
-        setSelectedTrip(data[0].id);
+      // Auto-select the first trip if available or if selected trip was deleted
+      if (data.length > 0) {
+        if (!selectedTrip || !data.find(t => t.id === selectedTrip)) {
+          setSelectedTrip(data[0].id);
+        }
+      } else {
+        // No trips available
+        setSelectedTrip(null);
+        setTripData(null);
+        setParsedData(null);
       }
     } catch (err) {
       console.error('Error fetching trips:', err);
@@ -79,6 +89,46 @@ function App() {
   const handleTripSelect = (tripId) => {
     setSelectedTrip(tripId);
     setActiveTab('map'); // Switch to map tab when trip changes
+  };
+
+  const handleDeleteClick = (tripId) => {
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      setTripToDelete(trip);
+      setDeleteDialogOpen(true);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!tripToDelete) return;
+
+    try {
+      const response = await fetch(`/api/trips/${tripToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete trip');
+      }
+
+      // Refresh trips list
+      await fetchTrips();
+
+      // Close dialog
+      setDeleteDialogOpen(false);
+      setTripToDelete(null);
+    } catch (err) {
+      console.error('Error deleting trip:', err);
+      setError(err.message || 'Failed to delete trip. Please try again.');
+      setDeleteDialogOpen(false);
+      setTripToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setTripToDelete(null);
   };
 
   if (loading && !trips.length) {
@@ -170,6 +220,7 @@ function App() {
                 selectedTrip={selectedTrip}
                 onSelectTrip={handleTripSelect}
                 parsedData={parsedData}
+                onDeleteTrip={handleDeleteClick}
               />
             </TabsContent>
 
@@ -204,6 +255,19 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+          className={"z-[999]"}
+        isOpen={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Trip"
+        message={`Are you sure you want to delete the trip from ${tripToDelete?.date}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+      />
     </div>
   );
 }

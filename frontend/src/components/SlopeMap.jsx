@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, Gauge, Flag, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { MapPin, Gauge, Flag, Play, Pause, SkipBack, SkipForward, Trash2 } from 'lucide-react';
 import TripSelector from './TripSelector';
 import { Button } from './ui/button';
 
@@ -93,7 +93,7 @@ function PlaybackMarker({ position, data }) {
   );
 }
 
-export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData }) {
+export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData, onDeleteTrip }) {
   const mapRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -153,6 +153,7 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
   };
 
   if (!parsedData || !parsedData.polyline || parsedData.polyline.length === 0) {
+      console.log(parsedData);
     return (
       <div className="w-full space-y-4">
         {/* Trip Selector */}
@@ -184,12 +185,25 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
       <div className="flex flex-col md:flex-col gap-4 items-start md:items-center justify-between">
 
           <div className={"w-full"}>
-              <div className="max-w-xs w-full">
+              <div className="flex gap-2 w-full max-w-xs">
+              <div className="flex-1">
               <TripSelector
                 trips={trips}
                 selectedTrip={selectedTrip}
                 onSelectTrip={onSelectTrip}
               />
+              </div>
+              {selectedTrip && onDeleteTrip && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onDeleteTrip(selectedTrip)}
+                  className="bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600"
+                  title="Delete trip"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
             </div>
               {/* Playback Controls */}
               {enablePlayback && (
@@ -266,7 +280,7 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
           </div>
 
           {/* Map Container */}
-          <div className="h-[500px] w-full rounded-lg overflow-hidden shadow-lg">
+          <div className="h-[500px] w-full rounded-lg overflow-hidden shadow-lg z-0">
         <MapContainer
           ref={mapRef}
           center={[startPoint.lat, startPoint.lng]}

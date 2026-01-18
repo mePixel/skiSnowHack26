@@ -34,7 +34,7 @@ function App() {
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/trips');
+      const response = await fetch(process.env.VITE_API_BASE_URL+'/api/trips');
       if (!response.ok) {
         throw new Error('Failed to fetch trips');
       }
@@ -64,7 +64,7 @@ function App() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/trips/${tripId}`);
+      const response = await fetch(process.env.VITE_API_BASE_URL+`/api/trips/${tripId}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         if (response.status === 400) {
@@ -103,7 +103,7 @@ function App() {
     if (!tripToDelete) return;
 
     try {
-      const response = await fetch(`/api/trips/${tripToDelete.id}`, {
+      const response = await fetch(process.env.VITE_API_BASE_URL+`/api/trips/${tripToDelete.id}`, {
         method: 'DELETE',
       });
 

@@ -1,0 +1,104 @@
+{
+  "slopes": [
+    {
+      "id": "slope_001",
+      "name": "Kitzsteinhorn Gipfel",
+      "difficulty": "black",
+      "length": 3500,
+      "elevation": 3020,
+      "occupancy": 25,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "green"
+    },
+    {
+      "id": "slope_002",
+      "name": "Möslalm Abfahrt",
+      "difficulty": "red",
+      "length": 2800,
+      "elevation": 2450,
+      "occupancy": 65,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "yellow"
+    },
+    {
+      "id": "slope_003",
+      "name": "Langwiedboden",
+      "difficulty": "blue",
+      "length": 3200,
+      "elevation": 2100,
+      "occupancy": 45,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "yellow"
+    },
+    {
+      "id": "slope_004",
+      "name": "Gletscherjet 1",
+      "difficulty": "red",
+      "length": 2500,
+      "elevation": 2800,
+      "occupancy": 80,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "red"
+    },
+    {
+      "id": "slope_005",
+      "name": "Alpincenter",
+      "difficulty": "green",
+      "length": 1500,
+      "elevation": 1900,
+      "occupancy": 20,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "green"
+    },
+    {
+      "id": "slope_006",
+      "name": "Familienabfahrt",
+      "difficulty": "blue",
+      "length": 2200,
+      "elevation": 2000,
+      "occupancy": 55,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "yellow"
+    },
+    {
+      "id": "slope_007",
+      "name": "Gletscherjet 2",
+      "difficulty": "black",
+      "length": 3000,
+      "elevation": 2900,
+      "occupancy": 35,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "yellow"
+    },
+    {
+      "id": "slope_008",
+      "name": "Maiskogel",
+      "difficulty": "red",
+      "length": 2600,
+      "elevation": 2300,
+      "occupancy": 70,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "red"
+    },
+    {
+      "id": "slope_009",
+      "name": "Schmittenhöhe",
+      "difficulty": "blue",
+      "length": 2800,
+      "elevation": 2200,
+      "occupancy": 40,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "yellow"
+    },
+    {
+      "id": "slope_010",
+      "name": "Übungshang",
+      "difficulty": "green",
+      "length": 800,
+      "elevation": 1800,
+      "occupancy": 15,
+      "lastUpdated": "2026-01-18T09:00:00Z",
+      "status": "green"
+    }
+  ]
+}

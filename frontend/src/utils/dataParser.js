@@ -235,3 +235,362 @@ export function formatDate(timestamp) {
     minute: '2-digit'
   });
 }
+
+/**
+ * Calculate advanced performance metrics for ski trip analysis
+ * @param {Array} gpsPoints - Array of GPS points
+ * @returns {Object} Advanced performance metrics
+ */
+export function calculatePerformanceMetrics(gpsPoints) {
+  if (!gpsPoints || gpsPoints.length < 2) {
+    return {
+      speedConsistency: 0,
+      accelerationZones: [],
+      decelerationZones: [],
+      skiingTime: 0,
+      liftTime: 0,
+      stoppedTime: 0,
+      speedZones: {
+        stationary: 0,
+        slow: 0,
+        moderate: 0,
+        fast: 0,
+        veryFast: 0
+      }
+    };
+  }
+
+  // Calculate speed statistics
+  const speeds = gpsPoints.map(p => p.speed);
+  const avgSpeed = speeds.reduce((sum, speed) => sum + speed, 0) / speeds.length;
+  const speedVariance = speeds.reduce((sum, speed) => sum + Math.pow(speed - avgSpeed, 2), 0) / speeds.length;
+  const speedConsistency = Math.sqrt(speedVariance); // Standard deviation
+
+  // Find acceleration and deceleration zones
+  const accelerationZones = [];
+  const decelerationZones = [];
+  const accelerationThreshold = 1.0; // m/s²
+  const minZoneDuration = 3; // Minimum points to consider a zone
+
+  for (let i = 1; i < gpsPoints.length - 1; i++) {
+    const prevPoint = gpsPoints[i - 1];
+    const currPoint = gpsPoints[i];
+    const nextPoint = gpsPoints[i + 1];
+    
+    const timeDiff1 = (currPoint.timestamp - prevPoint.timestamp) / 1000;
+    const timeDiff2 = (nextPoint.timestamp - currPoint.timestamp) / 1000;
+    
+    if (timeDiff1 > 0 && timeDiff2 > 0) {
+      const accel1 = (currPoint.speed - prevPoint.speed) / timeDiff1;
+      const accel2 = (nextPoint.speed - currPoint.speed) / timeDiff2;
+      const avgAccel = (accel1 + accel2) / 2;
+      
+      if (avgAccel > accelerationThreshold) {
+        // Check if we're continuing an existing acceleration zone
+        if (accelerationZones.length > 0 &&
+            accelerationZones[accelerationZones.length - 1].endIndex === i - 1) {
+          accelerationZones[accelerationZones.length - 1].endIndex = i;
+          accelerationZones[accelerationZones.length - 1].maxAcceleration =
+            Math.max(accelerationZones[accelerationZones.length - 1].maxAcceleration, avgAccel);
+        } else {
+          accelerationZones.push({
+            startIndex: i - 1,
+            endIndex: i,
+            maxAcceleration: avgAccel,
+            startSpeed: prevPoint.speed,
+            endSpeed: nextPoint.speed
+          });
+        }
+      } else if (avgAccel < -accelerationThreshold) {
+        // Check if we're continuing an existing deceleration zone
+        if (decelerationZones.length > 0 &&
+            decelerationZones[decelerationZones.length - 1].endIndex === i - 1) {
+          decelerationZones[decelerationZones.length - 1].endIndex = i;
+          decelerationZones[decelerationZones.length - 1].maxDeceleration =
+            Math.min(decelerationZones[decelerationZones.length - 1].maxDeceleration, avgAccel);
+        } else {
+          decelerationZones.push({
+            startIndex: i - 1,
+            endIndex: i,
+            maxDeceleration: avgAccel,
+            startSpeed: prevPoint.speed,
+            endSpeed: nextPoint.speed
+          });
+        }
+      }
+    }
+  }
+
+  // Filter zones by minimum duration
+  const filteredAccelZones = accelerationZones.filter(zone =>
+    (zone.endIndex - zone.startIndex + 1) >= minZoneDuration
+  );
+  const filteredDecelZones = decelerationZones.filter(zone =>
+    (zone.endIndex - zone.startIndex + 1) >= minZoneDuration
+  );
+
+  // Calculate time spent in different activities
+  let skiingTime = 0;
+  let liftTime = 0;
+  let stoppedTime = 0;
+  
+  // Speed thresholds (m/s)
+  const stoppedThreshold = 0.5;
+  const liftThreshold = 2.0;
+  
+  for (let i = 1; i < gpsPoints.length; i++) {
+    const timeDiff = (gpsPoints[i].timestamp - gpsPoints[i-1].timestamp) / 1000;
+    const avgSpeed = (gpsPoints[i].speed + gpsPoints[i-1].speed) / 2;
+    
+    if (avgSpeed < stoppedThreshold) {
+      stoppedTime += timeDiff;
+    } else if (avgSpeed < liftThreshold) {
+      // This could be either slow skiing or lift - determine by altitude change
+      const altitudeChange = gpsPoints[i].altitude - gpsPoints[i-1].altitude;
+      if (altitudeChange > 0) {
+        liftTime += timeDiff;
+      } else {
+        skiingTime += timeDiff;
+      }
+    } else {
+      skiingTime += timeDiff;
+    }
+  }
+
+  // Calculate time spent in different speed zones
+  const speedZones = {
+    stationary: 0,    // < 0.5 m/s
+    slow: 0,          // 0.5 - 2.0 m/s
+    moderate: 0,      // 2.0 - 5.0 m/s
+    fast: 0,          // 5.0 - 10.0 m/s
+    veryFast: 0       // > 10.0 m/s
+  };
+
+  for (let i = 1; i < gpsPoints.length; i++) {
+    const timeDiff = (gpsPoints[i].timestamp - gpsPoints[i-1].timestamp) / 1000;
+    const avgSpeed = (gpsPoints[i].speed + gpsPoints[i-1].speed) / 2;
+    
+    if (avgSpeed < 0.5) {
+      speedZones.stationary += timeDiff;
+    } else if (avgSpeed < 2.0) {
+      speedZones.slow += timeDiff;
+    } else if (avgSpeed < 5.0) {
+      speedZones.moderate += timeDiff;
+    } else if (avgSpeed < 10.0) {
+      speedZones.fast += timeDiff;
+    } else {
+      speedZones.veryFast += timeDiff;
+    }
+  }
+
+  return {
+    speedConsistency,
+    accelerationZones: filteredAccelZones,
+    decelerationZones: filteredDecelZones,
+    skiingTime,
+    liftTime,
+    stoppedTime,
+    speedZones
+  };
+}
+
+/**
+ * Calculate slope analysis metrics
+ * @param {Array} gpsPoints - Array of GPS points
+ * @returns {Object} Slope analysis metrics
+ */
+export function calculateSlopeAnalysis(gpsPoints) {
+  if (!gpsPoints || gpsPoints.length < 2) {
+    return {
+      steepestSections: [],
+      averageGradient: 0,
+      slopeDifficulty: {
+        green: 0,    // < 15%
+        blue: 0,     // 15-25%
+        red: 0,      // 25-40%
+        black: 0     // > 40%
+      },
+      totalRuns: 0,
+      longestRun: 0
+    };
+  }
+
+  // Calculate gradient for each segment
+  const segments = [];
+  let totalGradient = 0;
+  let totalDistance = 0;
+
+  for (let i = 1; i < gpsPoints.length; i++) {
+    const prevPoint = gpsPoints[i - 1];
+    const currPoint = gpsPoints[i];
+    
+    const distance = calculateDistance(prevPoint.lat, prevPoint.lng, currPoint.lat, currPoint.lng);
+    const altitudeChange = prevPoint.altitude - currPoint.altitude; // Positive for descent
+    
+    if (distance > 0) {
+      const gradient = (altitudeChange / distance) * 100; // Percentage
+      segments.push({
+        startIndex: i - 1,
+        endIndex: i,
+        gradient: Math.abs(gradient),
+        isDescent: altitudeChange > 0,
+        distance: distance,
+        altitudeChange: altitudeChange
+      });
+      
+      totalGradient += Math.abs(gradient) * distance;
+      totalDistance += distance;
+    }
+  }
+
+  // Calculate average gradient
+  const averageGradient = totalDistance > 0 ? totalGradient / totalDistance : 0;
+
+  // Find steepest sections (top 5)
+  const steepestSections = segments
+    .filter(seg => seg.isDescent) // Only consider descents
+    .sort((a, b) => b.gradient - a.gradient)
+    .slice(0, 5);
+
+  // Categorize slopes by difficulty
+  const slopeDifficulty = {
+    green: 0,    // < 15%
+    blue: 0,     // 15-25%
+    red: 0,      // 25-40%
+    black: 0     // > 40%
+  };
+
+  segments.forEach(seg => {
+    if (seg.isDescent) {
+      if (seg.gradient < 15) {
+        slopeDifficulty.green += seg.distance;
+      } else if (seg.gradient < 25) {
+        slopeDifficulty.blue += seg.distance;
+      } else if (seg.gradient < 40) {
+        slopeDifficulty.red += seg.distance;
+      } else {
+        slopeDifficulty.black += seg.distance;
+      }
+    }
+  });
+
+  // Identify runs (continuous descents)
+  const runs = [];
+  let currentRun = null;
+
+  for (let i = 0; i < segments.length; i++) {
+    const seg = segments[i];
+    
+    if (seg.isDescent) {
+      if (!currentRun) {
+        currentRun = {
+          startIndex: seg.startIndex,
+          endIndex: seg.endIndex,
+          distance: seg.distance,
+          altitudeDrop: Math.abs(seg.altitudeChange)
+        };
+      } else {
+        // Continue current run
+        currentRun.endIndex = seg.endIndex;
+        currentRun.distance += seg.distance;
+        currentRun.altitudeDrop += Math.abs(seg.altitudeChange);
+      }
+    } else {
+      // End current run if it exists
+      if (currentRun) {
+        runs.push(currentRun);
+        currentRun = null;
+      }
+    }
+  }
+
+  // Add the last run if the trip ends with a descent
+  if (currentRun) {
+    runs.push(currentRun);
+  }
+
+  const totalRuns = runs.length;
+  const longestRun = runs.length > 0 ? Math.max(...runs.map(run => run.distance)) : 0;
+
+  return {
+    steepestSections,
+    averageGradient,
+    slopeDifficulty,
+    totalRuns,
+    longestRun
+  };
+}
+
+/**
+ * Calculate altitude analysis metrics
+ * @param {Array} gpsPoints - Array of GPS points
+ * @returns {Object} Altitude analysis metrics
+ */
+export function calculateAltitudeAnalysis(gpsPoints) {
+  if (!gpsPoints || gpsPoints.length < 2) {
+    return {
+      elevationZones: {},
+      ascentTime: 0,
+      descentTime: 0,
+      maxAscentRate: 0,
+      maxDescentRate: 0
+    };
+  }
+
+  // Define elevation zones (relative to min/max altitude)
+  const minAltitude = Math.min(...gpsPoints.map(p => p.altitude));
+  const maxAltitude = Math.max(...gpsPoints.map(p => p.altitude));
+  const altitudeRange = maxAltitude - minAltitude;
+  
+  const elevationZones = {
+    bottom: 0,    // 0-25%
+    lower: 0,     // 25-50%
+    upper: 0,     // 50-75%
+    top: 0        // 75-100%
+  };
+
+  let ascentTime = 0;
+  let descentTime = 0;
+  let maxAscentRate = 0;
+  let maxDescentRate = 0;
+
+  for (let i = 1; i < gpsPoints.length; i++) {
+    const prevPoint = gpsPoints[i - 1];
+    const currPoint = gpsPoints[i];
+    
+    const timeDiff = (currPoint.timestamp - prevPoint.timestamp) / 1000;
+    const altitudeChange = currPoint.altitude - prevPoint.altitude;
+    
+    if (timeDiff > 0) {
+      const altitudeRate = altitudeChange / timeDiff; // m/s
+      
+      if (altitudeChange > 0) {
+        ascentTime += timeDiff;
+        maxAscentRate = Math.max(maxAscentRate, altitudeRate);
+      } else {
+        descentTime += timeDiff;
+        maxDescentRate = Math.max(maxDescentRate, Math.abs(altitudeRate));
+      }
+    }
+    
+    // Calculate time spent in elevation zones
+    const relativeAltitude = (currPoint.altitude - minAltitude) / altitudeRange;
+    if (relativeAltitude < 0.25) {
+      elevationZones.bottom += timeDiff;
+    } else if (relativeAltitude < 0.5) {
+      elevationZones.lower += timeDiff;
+    } else if (relativeAltitude < 0.75) {
+      elevationZones.upper += timeDiff;
+    } else {
+      elevationZones.top += timeDiff;
+    }
+  }
+
+  return {
+    elevationZones,
+    ascentTime,
+    descentTime,
+    maxAscentRate,
+    maxDescentRate
+  };
+}

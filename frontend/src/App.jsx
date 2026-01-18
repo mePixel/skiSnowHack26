@@ -4,6 +4,7 @@ import { Card, CardContent } from './components/ui/card';
 import SkiPass from './components/SkiPass';
 import SlopeMap from './components/SlopeMap';
 import Analytics from './components/Analytics';
+import Stats from './components/Stats';
 import Dialog from './components/ui/dialog';
 import { parseTripData } from './utils/dataParser';
 import { Loader2, AlertCircle, Mountain } from 'lucide-react';
@@ -238,12 +239,12 @@ function App() {
             {/* Stats Tab */}
             <TabsContent value="stats" className="mt-0">
                 {parsedData ? (
-                    <Analytics parsedData={parsedData} />
+                    <Stats parsedData={parsedData} />
                 ) : (
                     <Card className="bg-slate-50 border-slate-200">
                         <CardContent className="p-12 text-center">
                             <Mountain className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                            <p className="text-slate-600">Select a trip to view analytics</p>
+                            <p className="text-slate-600">Select a trip to view detailed statistics</p>
                         </CardContent>
                     </Card>
                 )}

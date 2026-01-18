@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import QRCode from 'qrcode.react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Mountain, Clock, Scan, Activity, RefreshCw } from 'lucide-react';
+import { Mountain, Clock, Activity, RefreshCw } from 'lucide-react';
 
 // Environment variables for ski pass configuration
 const skiPassData = {
@@ -17,7 +17,6 @@ const skiPassData = {
 };
 
 export default function SkiPass() {
-  const [isScanning, setIsScanning] = useState(false);
   const [slopes, setSlopes] = useState([]);
   const [loadingSlopes, setLoadingSlopes] = useState(false);
   const [filter, setFilter] = useState('all'); // 'all', 'green', 'blue', 'red', 'black'
@@ -58,14 +57,6 @@ export default function SkiPass() {
     } finally {
       setLoadingSlopes(false);
     }
-  };
-
-  const handleScan = () => {
-    setIsScanning(true);
-    // Simulate scan process
-    setTimeout(() => {
-      setIsScanning(false);
-    }, 2000);
   };
 
   const isValidToday = () => {
@@ -166,31 +157,10 @@ export default function SkiPass() {
                 />
               </div>
 
-              {/* Scan button overlay */}
-              {isScanning && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-lg">
-                  <div className="text-white text-center space-y-2">
-                    <Scan className="h-8 w-8 mx-auto animate-pulse" />
-                    <p className="text-sm font-medium">Scanning...</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Action Buttons */}
-      <div className="flex gap-3">
-        <button
-          onClick={handleScan}
-          disabled={!isValidToday() || isScanning}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-sky-600 hover:bg-sky-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Scan className="h-5 w-5" />
-          {isScanning ? 'Scanning...' : 'Scan to Lift'}
-        </button>
-      </div>
 
       {/* Resort Info Card */}
       <Card className="bg-slate-50 border-slate-200">

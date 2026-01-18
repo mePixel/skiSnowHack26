@@ -56,23 +56,120 @@ function MapBounds({ polyline }) {
   return null;
 }
 
-// Component to update playback marker position
-function PlaybackMarker({ position, data }) {
+// LERP function for smooth interpolation
+function lerp(start, end, t) {
+  return start + (end - start) * t;
+}
+
+// Easing function for smooth acceleration/deceleration
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+// Component to update playback marker position with smooth LERP animation
+function SmoothPlaybackMarker({ position, data, playbackSpeed }) {
   const map = useMap();
   const markerRef = useRef(null);
-
-  useEffect(() => {
-    if (markerRef.current && position) {
-      markerRef.current.setLatLng(position);
-      map.panTo(position, { animate: true, duration: 0.5 });
+  
+  // Animation state refs
+  const displayPosition = useRef(position);
+  const targetPosition = useRef(position);
+  const isAnimating = useRef(false);
+  const animationStartTime = useRef(0);
+  const animationFrameRef = useRef(null);
+  
+  // Calculate animation duration based on playback speed
+  const getAnimationDuration = useCallback(() => {
+    // Base duration of 200ms, adjusted by playback speed, minimum 50ms
+    return Math.max(50, 200 / playbackSpeed);
+  }, [playbackSpeed]);
+  
+  // Start animation to new position
+  const startAnimation = useCallback((newPosition) => {
+    if (!newPosition || !displayPosition.current) return;
+    
+    targetPosition.current = newPosition;
+    isAnimating.current = true;
+    animationStartTime.current = performance.now();
+    
+    // Cancel any existing animation
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
-  }, [position, map]);
-
+    
+    animateMarker();
+  }, []);
+  
+  // Animation loop
+  const animateMarker = useCallback(() => {
+    if (!isAnimating.current || !targetPosition.current) return;
+    
+    const now = performance.now();
+    const elapsed = now - animationStartTime.current;
+    const duration = getAnimationDuration();
+    const progress = Math.min(elapsed / duration, 1.0);
+    
+    // Apply easing
+    const easedProgress = easeInOutCubic(progress);
+    
+    // Calculate interpolated position
+    const newDisplayPosition = [
+      lerp(displayPosition.current[0], targetPosition.current[0], easedProgress),
+      lerp(displayPosition.current[1], targetPosition.current[1], easedProgress)
+    ];
+    
+    displayPosition.current = newDisplayPosition;
+    
+    // Update marker
+    if (markerRef.current) {
+      markerRef.current.setLatLng(newDisplayPosition);
+    }
+    
+    // Smooth map following with very short duration
+    map.panTo(newDisplayPosition, {
+      animate: true,
+      duration: 0.1,
+      noMoveStart: true
+    });
+    
+    if (progress < 1.0) {
+      animationFrameRef.current = requestAnimationFrame(animateMarker);
+    } else {
+      isAnimating.current = false;
+    }
+  }, [map, getAnimationDuration]);
+  
+  // Handle position changes
+  useEffect(() => {
+    if (position && (!displayPosition.current ||
+        (displayPosition.current[0] !== position[0] ||
+         displayPosition.current[1] !== position[1]))) {
+      startAnimation(position);
+    }
+  }, [position, startAnimation]);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+  
+  // Initialize display position on first render
+  useEffect(() => {
+    if (position && !displayPosition.current) {
+      displayPosition.current = position;
+      targetPosition.current = position;
+    }
+  }, []);
+  
   if (!position) return null;
 
   return (
     <Marker
-      position={position}
+      position={displayPosition.current}
       icon={playbackIcon}
       ref={markerRef}
     >
@@ -305,9 +402,10 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
           />
 
           {/* Playback Marker */}
-          <PlaybackMarker
+          <SmoothPlaybackMarker
             position={currentPosition}
             data={currentPosition}
+            playbackSpeed={playbackSpeed}
           />
 
           {/* Start Point */}

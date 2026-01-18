@@ -175,7 +175,7 @@ function App() {
                 <Mountain className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Ski Resort</h1>
+                <h1 className="text-xl font-bold text-slate-900">Kitzsteinhorn</h1>
                 <p className="text-xs text-slate-600">Companion App</p>
               </div>
             </div>
@@ -215,7 +215,7 @@ function App() {
             </TabsContent>
 
             {/* Map Tab */}
-            <TabsContent value="map" className="mt-0">
+            <TabsContent value="map" className="mt-0 flex flex-col gap-4">
               <SlopeMap
                 trips={trips}
                 selectedTrip={selectedTrip}
@@ -223,20 +223,30 @@ function App() {
                 parsedData={parsedData}
                 onDeleteTrip={handleDeleteClick}
               />
+                {parsedData ? (
+                    <Analytics parsedData={parsedData} />
+                ) : (
+                    <Card className="bg-slate-50 border-slate-200">
+                        <CardContent className="p-12 text-center">
+                            <Mountain className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+                            <p className="text-slate-600">Select a trip to view analytics</p>
+                        </CardContent>
+                    </Card>
+                )}
             </TabsContent>
 
             {/* Stats Tab */}
             <TabsContent value="stats" className="mt-0">
-              {parsedData ? (
-                <Analytics parsedData={parsedData} />
-              ) : (
-                <Card className="bg-slate-50 border-slate-200">
-                  <CardContent className="p-12 text-center">
-                    <Mountain className="h-16 w-16 mx-auto text-slate-400 mb-4" />
-                    <p className="text-slate-600">Select a trip to view analytics</p>
-                  </CardContent>
-                </Card>
-              )}
+                {parsedData ? (
+                    <Analytics parsedData={parsedData} />
+                ) : (
+                    <Card className="bg-slate-50 border-slate-200">
+                        <CardContent className="p-12 text-center">
+                            <Mountain className="h-16 w-16 mx-auto text-slate-400 mb-4" />
+                            <p className="text-slate-600">Select a trip to view analytics</p>
+                        </CardContent>
+                    </Card>
+                )}
             </TabsContent>
           </Tabs>
         )}

@@ -381,7 +381,7 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
       </div>
 
           {/* Map Legend */}
-          <div className="flex items-center justify-center gap-6 p-4 bg-white rounded-lg shadow-md">
+          <div className="flex items-center justify-center gap-2 md:gap-6 p-4 bg-white rounded-lg shadow-md flex-wrap">
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm" />
           <span className="text-sm font-medium">Start</span>

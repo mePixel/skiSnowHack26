@@ -247,7 +247,7 @@ function App() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-slate-600">
-              © 2024 Ski Resort Companion. Built with ❤️ for skiers.
+              © {new Date().getFullYear()} Ski Resort Companion. Built with ❤️ for skiers.
             </p>
             <div className="flex gap-4 text-sm text-slate-600">
               <span>📍 Austrian Alps</span>

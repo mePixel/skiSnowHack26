@@ -193,17 +193,6 @@ export default function SlopeMap({ trips, selectedTrip, onSelectTrip, parsedData
                 onSelectTrip={onSelectTrip}
               />
               </div>
-              {selectedTrip && onDeleteTrip && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onDeleteTrip(selectedTrip)}
-                  className="bg-white/90 backdrop-blur-sm hover:bg-red-50 hover:border-red-200 hover:text-red-600"
-                  title="Delete trip"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
             </div>
               {/* Playback Controls */}
               {enablePlayback && (
